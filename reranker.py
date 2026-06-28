@@ -1,5 +1,4 @@
 import threading
-from sentence_transformers import CrossEncoder
 
 class DocumentReranker:
     def __init__(self):
@@ -14,6 +13,7 @@ class DocumentReranker:
             with self._lock:
                 if self.model is None:  # Double-check locking pattern
                     print("⏳ Lazy-Loading Cross-Encoder model into memory...")
+                    from sentence_transformers import CrossEncoder
                     self.model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
                     print("✅ Cross-encoder successfully loaded and operational.")
         return self.model
