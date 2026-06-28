@@ -14,7 +14,7 @@ Built over **2,974 chunks** from **52 Wikipedia articles** with **8 endpoints** 
 Most RAG tutorials show one retrieval method. This project implements eight and documents exactly when each one wins and why.
 
 | Endpoint | Backend | Method | Best For |
-
+| :--- | :--- | :--- | :--- |
 | `POST /pg/search` | pgvector | Dense semantic search | Conceptual queries |
 | `POST /pg/hybrid-search` | pgvector | BM25 + RRF fusion | Technical keywords + intent |
 | `POST /pg/hybrid-rag` | pgvector | Hybrid retrieval + generation | Grounded Q&A with precision |
@@ -61,39 +61,37 @@ No hallucination. Knowledge boundary enforced via prompt.
 ---
 
 ## Architecture
-
-User Query
-                          │
-          ┌───────────────▼───────────────┐
-          │          FastAPI Layer          │
-          │   (Dependency Injection,        │
-          │    Lazy-loaded backends)        │
-          └───────────────┬───────────────┘
-                          │
-     ┌────────────────────┼────────────────────┐
-     │                    │                    │
-     ▼                    ▼                    ▼
-     pgvector Backend    Pinecone Backend      LangChain
-
-Dense / Hybrid /    Dense / RAG /        Orchestration
-
-Reranked / RAG      LangChain RAG        (both backends)
-
-│                    │                    │
-
-└────────────────────┼────────────────────┘
-
-│
-
-┌─────────▼─────────┐
-
-│  RAGPipelineManager│
-
-│  BM25 + RRF Fusion │
-
-│  DocumentReranker  │
-
-└───────────────────┘
+<pre>
+                                 User Query
+                                     │
+                          ┌──────────▼──────────┐
+                          │    FastAPI Layer    │
+                          │ (API Routing & DI)  │
+                          └──────────┬──────────┘
+                                     │
+         ┌───────────────────────────┼───────────────────────────┐
+         ▼                           ▼                           ▼
+┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│ pgvector Engine │         │ Pinecone Engine │         │ LangChain Layer │
+├─────────────────┤         ├─────────────────┤         ├─────────────────┤
+│ • Dense Search  │         │ • Dense Search  │         │ • PG VectorStore│
+│ • Hybrid Search │         │ • Native RAG    │         │ • PC VectorStore│
+│ • Reranked List │         │                 │         │ • Structured RAG│
+│ • Custom RAG    │         │                 │         │                 │
+└────────┬────────┘         └─────────────────┘         └─────────────────┘
+         │
+         └───────────────────────────┐
+                                     ▼
+                    ┌────────────────────────────────┐
+                    │     Custom Processing Core     │
+                    ├────────────────────────────────┤
+                    │ • RAGPipelineManager           │
+                    │   - Sparse BM25 Retrieval      │
+                    │   - Reciprocal Rank Fusion     │
+                    │ • DocumentReranker             │
+                    │   - Cross-Encoder Re-scoring   │
+                    └────────────────────────────────┘
+</pre>
 
 **Ingestion Pipeline (one-time setup)**
 
