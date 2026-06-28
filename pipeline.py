@@ -22,10 +22,30 @@ class RAGPipelineManager:
         try:
             temp_conn = get_pg_connection()
             cursor = temp_conn.cursor(cursor_factory=RealDictCursor)
+            
+            cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'documents'
+            );
+            """)
+            
+            table_exists = cursor.fetchone()['exists']
+            
+            if not table_exists:
+                print("ℹ️ 'documents' table does not exist yet. Skipping BM25 hydration until data is ingested.")
+                cursor.close()
+                temp_conn.close()
+                return
+            
             cursor.execute("SELECT id, content, source, source_url, chunk_index FROM documents")
             rows = cursor.fetchall()
             cursor.close()
             temp_conn.close()
+            
+            if not rows:
+                print("ℹ️ 'documents' table is empty. BM25 standby mode active.")
+                return
 
             tokenized_corpus = []
             for row in rows:
