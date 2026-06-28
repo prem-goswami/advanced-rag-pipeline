@@ -12,11 +12,20 @@ class RAGPipelineManager:
         self.client = None
         self.bm25_index = None
         self.raw_chunks_lookup = {}
+    
+    
+    def _get_client(self):
+        if self.client is None:
+            self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        return self.client
 
-    def initialize_resources(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.hydrate_bm25_index()
-
+    def _ensure_bm25_initialized(self):
+        """Thread-safe helper to build the BM25 index on demand."""
+        if self.bm25_index is None:
+            with self._lock:
+                if self.bm25_index is None:
+                    self.hydrate_bm25_index()
+                    
     def hydrate_bm25_index(self):
         print("⏳ System boot: Hydrating global BM25 keyword index from PostgreSQL...")
         try:
@@ -60,6 +69,8 @@ class RAGPipelineManager:
             print(f"⚠️ BM25 Hydration skipped or failed (Expected if DB empty during initial setup): {e}")
 
     def execute_hybrid_rerank_retrieval(self, query: str, top_k: int, pg_conn, search_result_schema) -> list:
+        client = self._get_client()
+        self._ensure_bm25_initialized()
         # 1. Dense Search
         embedding_response = self.client.embeddings.create(
             model="text-embedding-3-small", input=query

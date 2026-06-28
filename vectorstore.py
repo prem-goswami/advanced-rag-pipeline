@@ -23,7 +23,8 @@ def get_pg_connection():
         port=int(os.getenv("PGPORT", 5432)),
         dbname=os.getenv("PGDATABASE", "wikidb"),
         user=os.getenv("PGUSER", "pguser"),
-        password=os.getenv("PGPASSWORD", "pass")
+        password=os.getenv("PGPASSWORD", "pass"),
+        connect_timeout=3
     )
 
 def get_pg_vectorstore():
