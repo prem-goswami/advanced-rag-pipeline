@@ -26,7 +26,7 @@ class DocumentReranker:
         encoder_model = self._get_model()
 
         pairs = [(query, candidate["text"]) for candidate in candidates]
-        scores = self.model.predict(pairs)
+        scores = encoder_model.predict(pairs)
 
         for i, candidate in enumerate(candidates):
             candidate["rerank_score"] = float(scores[i])

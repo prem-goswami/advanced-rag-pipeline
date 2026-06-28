@@ -1,4 +1,5 @@
 import os
+import threading
 from dotenv import load_dotenv
 from openai import OpenAI
 from rank_bm25 import BM25Okapi
@@ -12,6 +13,7 @@ class RAGPipelineManager:
         self.client = None
         self.bm25_index = None
         self.raw_chunks_lookup = {}
+        self._lock = threading.Lock()
     
     
     def _get_client(self):
