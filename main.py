@@ -69,7 +69,7 @@ class SearchResponse(BaseModel):
     results: list[SearchResult]
 
 class RAGRequest(BaseModel):
-    question: str = Field(..., description="Question to answer.", examples=["Explain how hybrid retrieval works."])
+    question: str = Field(..., description="Question to answer.", examples=["What is retrieval augmented generation?"])
     top_k: int = Field(5, ge=1, le=20, description="Supporting sources.", examples=[5])
 
 class RAGResponse(BaseModel):
